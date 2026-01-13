@@ -1,0 +1,120 @@
+#!/bin/bash
+
+echo -e "Bootstrap \033[32mpython\033[0m"
+set -e
+
+PYTHON_VERSION="3.11.7"
+VIRTUAL_ENV_NAME="glacier_atlas_$PYTHON_VERSION"
+
+# Poetry Install
+
+POETRY_VERSION="1.8.3"
+echo $VIRTUAL_ENV_NAME >.python-version
+
+BREW=$(brew --prefix)
+export LDFLAGS="-L$BREW/lib"
+export CFLAGS="-I$BREW/include"
+export CPPFLAGS="-I$BREW/include"
+export PKG_CONFIG_PATH="$BREW/opt/tcl-tk/lib/pkgconfig"
+
+if [[ $(uname -s) == "Darwin" ]]; then
+  OS_VERSION="$(defaults read loginwindow SystemVersionStampAsString)"
+else
+  OS_VERSION="Linux"
+fi
+
+ensure_bashrc_is_loaded_in_new_shells() {
+  if [ $SHELL = "/bin/bash" ] && ! test -f ~/.profile && ! test -f ~/.bash_profile; then
+    echo "Creating ~/.profile to load .bashrc"
+    cat >~/.profile <<EOF
+if [ -f ~/.bashrc ]; then
+    source ~/.bashrc
+fi
+EOF
+  fi
+}
+
+# test if pyenv is installed
+if ! [ -x "$(command -v pyenv)" ]; then
+  echo "Install pyenv..."
+  brew install pyenv
+  brew install pyenv-virtualenv
+
+  ensure_bashrc_is_loaded_in_new_shells
+
+  eval "$(pyenv init -)"
+  eval "$(pyenv virtualenv-init -)"
+fi
+
+# test if python is installed
+if [ -z "$(pyenv versions | grep $PYTHON_VERSION)" ]; then
+
+  # test if pyenv is up to date (contains python version)
+  if [ -z "$(pyenv install --list | grep $PYTHON_VERSION)" ]; then
+    brew update && brew upgrade pyenv
+  fi
+
+  xcode-select --install 2 &>/dev/null || true
+  echo "Install python $PYTHON_VERSION"
+
+  if [[ "$OS_VERSION" == 11.* ]]; then
+    echo "Big sur, reinstall zlib"
+    brew reinstall zlib bzip2
+    pyenv install $PYTHON_VERSION
+  else
+    if [ $(uname -s) == "Darwin" ]; then
+      PYTHON_CONFIGURE_OPTS="--enable-unicode=ucs2" CFLAGS="-I$(xcrun --show-sdk-path)/usr/include" pyenv install $PYTHON_VERSION
+    else
+      PYTHON_CONFIGURE_OPTS="--enable-unicode=ucs2" CFLAGS="-I/usr/include" pyenv install $PYTHON_VERSION
+    fi
+  fi
+
+else
+  echo "python $PYTHON_VERSION already installed"
+fi
+EXECUTABLE=$(pyenv root)/versions/$PYTHON_VERSION/bin/python
+
+$EXECUTABLE -c 'import ssl' || {
+  echo "SSL seems broken, re-install python $VIRTUAL_ENV_NAME"
+  echo "install python $PYTHON_VERSION"
+  if [ $(uname -s) == "Darwin" ]; then
+    PYTHON_CONFIGURE_OPTS="--enable-unicode=ucs2" CFLAGS="-I$(xcrun --show-sdk-path)/usr/include" pyenv install --force $PYTHON_VERSION
+  else
+    PYTHON_CONFIGURE_OPTS="--enable-unicode=ucs2" CFLAGS="-I/usr/include" pyenv install --force $PYTHON_VERSION
+  fi
+}
+
+if [ -z "$(pyenv versions | grep $VIRTUAL_ENV_NAME)" ]; then
+  echo "create virtual env $VIRTUAL_ENV_NAME"
+  pyenv virtualenv $PYTHON_VERSION $VIRTUAL_ENV_NAME
+fi
+
+unset PYENV_VERSION
+
+if [ -z "$(pyenv version | grep $VIRTUAL_ENV_NAME)" ]; then
+  echo "activate virtual env $VIRTUAL_ENV_NAME"
+  pyenv activate $VIRTUAL_ENV_NAME
+fi
+
+echo "Install poetry"
+"$(pyenv which pip)" install --upgrade pip setuptools
+"$(pyenv which pip)" install --upgrade poetry==$POETRY_VERSION
+"$(pyenv which poetry)" config virtualenvs.create false --local
+
+echo "Clear poetry cache"
+"$(pyenv which poetry)" cache list | while read -r name; do
+  yes | "$(pyenv which poetry)" cache clear "$name" --all -q
+done
+
+echo "Install python dependencies"
+"$(pyenv which poetry)" install
+
+if ! aws --version; then
+  echo "Fix aws install..."
+  "$(pyenv which pip)" uninstall -y awscli
+  "$(pyenv which poetry)" install
+fi
+
+# Jupyter setup
+echo "Installing ipython kernel"
+ipython kernel install --user --name=$VIRTUAL_ENV_NAME

@@ -1,0 +1,7 @@
+#!/bin/bash
+
+PYTHON_VERSION="3.10.4"
+VIRTUAL_ENV_NAME="risks_$PYTHON_VERSION"
+
+pyenv virtualenv-delete $VIRTUAL_ENV_NAME
+ipython kernel uninstall --user --name=$VIRTUAL_ENV_NAME

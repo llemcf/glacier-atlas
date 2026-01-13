@@ -1,0 +1,56 @@
+[tool.poetry]
+name = "glacier_atlas"
+version = "0.1.0"
+description = ""
+authors = ["romain <romain.vincent@deepki.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.11.7,<3.12"
+numpy = { version = "^1.26.0" }
+pandas = "^2.2.0"
+xarray = { version = "^2025.1.2", extras = ["scipy"] }
+matplotlib = "3.9.0"
+zarr = { version = "<3.0" }
+jupyter-core = "5.8.1"
+jupyter-contrib-nbextensions = "0.7.0"
+python-dotenv = "1.0.1"
+h3 = "^3.7.7"
+numcodecs = { version = "0.15.1" }
+shapely = "^2.1.1"
+streamlit = "^1.49.1"
+scikit-learn = "^1.7.2"
+ipympl = "^0.9.8"
+openpyxl = "^3.1.5"
+seaborn = "^0.13.2"
+tree = "^0.2.4"
+plotly = "^6.5.0"
+folium = "^0.20.0"
+streamlit-folium = "^0.26.1"
+streamlit-image-comparison = "^0.0.4"
+scikit-image = "^0.26.0"
+imagecodecs = "^2026.1.1"
+
+[tool.poetry.dev-dependencies]
+black = "^23.0"
+dvc = { version = "^3", extras = ["s3"] }
+pytest = ">=6.0.1"
+awscli = "^1.0"
+pytest-cov = ">=2.10.1"
+isort = "^5.4.2"
+urllib3 = "<2"
+
+[tool.poetry.group.dev.dependencies]
+invoke = "^2.2.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[[tool.poetry.source]]
+name = "deepki"
+url = "https://gitlab.com/api/v4/projects/25157318/packages/pypi/simple"
+priority = "primary"
+
+[tool.poetry.scripts]
+ddk = 'deepki.ddk.cli.main:ddk'

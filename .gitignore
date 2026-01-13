@@ -1,0 +1,19 @@
+# Fichiers système Mac
+.DS_Store
+
+# Python & Cache
+__pycache__/
+*.pyc
+
+# Environnements virtuels (Poetry / Venv)
+.venv/
+env/
+venv/
+
+# IDE
+.vscode/
+.idea/
+
+# Fichiers volumineux (optionnel, si tu as des vidéos ou des tiffs énormes)
+*.tiff
+data/images_highres

@@ -1,0 +1,68 @@
+# mongo
+mongodb:
+  host: localhost
+  port: 27020
+  url: localhost:27017
+
+dr2:
+  endpoints:
+    fake_endpoint:
+      url: fake_url
+  default_endpoint: fake_endpoint
+
+esb_service: nothing
+esb_platform: nothing
+esb_environment: nothing
+
+environments:
+  local:
+    - url: http://localhost:5142
+
+  testing:
+    - url: https://deepki-ready-testing.deepki.com
+
+  uat:
+    - url: https://deepki-ready-uat.deepki.com
+    - url: https://esg-uat.realassets.axa-im.com
+    - url: https://ccs-uat.deepki.com
+
+  prod:
+    - url: https://deepki-ready.deepki.com
+    - url: https://esg.realassets.axa-im.com
+    - url: https://osfi.deepki.com
+    - url: https://ccs.deepki.com# mongo
+mongodb:
+  host: localhost
+  port: 27020
+  url: localhost:27017
+
+dr2:
+  endpoints:
+    fake_endpoint:
+      url: fake_url
+  default_endpoint: fake_endpoint
+
+esb_service: nothing
+esb_platform: nothing
+esb_environment: nothing
+
+environments:
+  local:
+    - url: http://localhost:5142
+
+  testing:
+    - url: https://deepki-ready-testing.deepki.com
+
+  uat:
+    - url: https://deepki-ready-uat.deepki.com
+    - url: https://esg-uat.realassets.axa-im.com
+    - url: https://ccs-uat.deepki.com
+
+  prod:
+    - url: https://deepki-ready.deepki.com
+    - url: https://esg.realassets.axa-im.com
+    - url: https://osfi.deepki.com
+    - url: https://ccs.deepki.com
+
+api:
+  url: https://api.deepki.com

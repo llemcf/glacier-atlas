@@ -1,0 +1,11 @@
+[virtualenvs]
+create = false
+
+[repositories]
+[repositories.gitlab]
+url = "https://gitlab.com/api/v4/projects/25157318/packages/pypi/simple"
+
+[http-basic]
+[http-basic.gitlab]
+username = "dr2-poetry"
+password = "gldt-o6hXUPswi1VoLsTEbEAy"
