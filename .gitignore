@@ -13,6 +13,8 @@ venv/
 # IDE
 .vscode/
 .idea/
+pyproject.toml
+poetry.lock
 
 # Fichiers volumineux (optionnel, si tu as des vidéos ou des tiffs énormes)
 *.tiff
