@@ -167,20 +167,16 @@ def view_home():
     
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.write("""
-        *Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur.*
-        
-        Ce projet de rephotographie documente le recul des glaciers au cours du dernier siècle en superposant des archives historiques à des prises de vues contemporaines réalisées au même point de coordonnées.
-        """)
+        st.write("""Ce projet de rephotographie documente le recul des glaciers au cours du dernier siècle en superposant des archives historiques à des prises de vues contemporaines réalisées au même point de coordonnées.""")
         
         st.markdown("<br><br>", unsafe_allow_html=True)
         
         btn_col1, btn_col2 = st.columns(2)
         with btn_col1:
-            if st.button("🗺️ Explorer l'Atlas"):
+            if st.button("Explorer l'Atlas"):
                 navigate_to('atlas')
         with btn_col2:
-            if st.button("📸 Contribuer & Uploader"):
+            if st.button("Contribuer & Uploader"):
                 navigate_to('upload')
 
 def view_atlas():
@@ -321,10 +317,6 @@ def view_upload():
             photo_rephoto = st.file_uploader("Importer la rephotographie (Récemment)", type=['jpg', 'png'])
             
             st.subheader("Questionnaire Observateur")
-            evolution_percue = st.select_slider(
-                "Comment évaluez-vous le retrait glaciaire sur ce point ?",
-                options=["Faible", "Modéré", "Important", "Spectaculaire"]
-            )
             commentaires = st.text_area("Remarques additionnelles (météo, conditions d'accès...)")
             
         submit = st.form_submit_button("Envoyer ma contribution")
