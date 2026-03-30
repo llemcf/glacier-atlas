@@ -1,3 +1,5 @@
+import uuid
+import re
 import streamlit as st
 import pandas as pd
 import folium
@@ -11,6 +13,21 @@ from requests.auth import HTTPBasicAuth
 import requests
 import io
 from PIL import Image
+from datetime import datetime
+
+# --- IMPORT DES FONCTIONS MÉTIER ---
+from utils import (
+    load_csv_data, 
+    get_rgi_glacier_names, 
+    load_rgi_shapefile,
+    fetch_image_from_nextcloud, 
+    create_nextcloud_folder, 
+    upload_to_nextcloud, slugify,
+    optimize_image,
+    CSV_PATH, 
+    NEXTCLOUD_BASE,
+    append_to_remote_csv,
+)
 
 # ==========================================
 # CONFIGURATION ET DESIGN CSS
@@ -70,12 +87,12 @@ st.markdown("""
     #MainMenu {visibility: hidden;}
     header {visibility: hidden;}
     footer {visibility: hidden;}
+            
 </style>
 """, unsafe_allow_html=True)
 
-# ==========================================
-# GESTION DE LA NAVIGATION (ROUTER)
-# ==========================================
+# --- GESTION DE LA NAVIGATION (ROUTER) ---
+
 if 'current_page' not in st.session_state:
     st.session_state.current_page = 'home'
 
@@ -83,80 +100,7 @@ def navigate_to(page_name):
     st.session_state.current_page = page_name
     st.rerun()
 
-# ==========================================
-# FONCTIONS DONNÉES ET CARTOGRAPHIE
-# ==========================================
-CSV_PATH = Path("data/glacier_inventory.csv")
-RGI_PATH = Path("data/randolph_glacier_inventory_7/rgi2000_v70_vector.shp")
-NEXTCLOUD_BASE = "https://nextcloud.mountainwilderness.fr/public.php/webdav/glacier_atlas/images/"
-
-@st.cache_data
-def load_csv_data():
-    if not CSV_PATH.exists():
-        return []
-    df = pd.read_csv(CSV_PATH)
-    pairs = []
-    df['id'] = df.index
-    
-    for name, group in df.groupby('name'):
-        old = group[group['state'] == 'old']
-        new = group[group['state'] == 'new']
-        if not old.empty and not new.empty:
-            pairs.append({
-                "id": f"{name}_{old.iloc[0]['id']}",
-                "name": name,
-                "lat": new.iloc[0]['lat_photo'],
-                "lon": new.iloc[0]['lon_photo'],
-                "old_img": old.iloc[0]['filename'],
-                "new_img": new.iloc[0]['filename'],
-                "old_date": old.iloc[0]['date'],
-                "new_date": new.iloc[0]['date']
-            })
-    return pairs
-
-@st.cache_data
-def load_rgi_shapefile(bounds):
-    """
-    Charge le shapefile RGI de manière intelligente.
-    Au lieu de charger la planète entière (ce qui ferait planter le serveur),
-    on ne charge que la zone géographique de vos photos (bbox=bounds).
-    """
-    if not RGI_PATH.exists():
-        return None
-    try:
-        # bounds = (min_lon, min_lat, max_lon, max_lat)
-        return gpd.read_file(RGI_PATH, bbox=bounds)
-    except Exception as e:
-        st.error(f"Erreur lors du chargement RGI : {e}")
-        return None
-    
-@st.cache_data(show_spinner=False)
-def fetch_image_from_nextcloud(url):
-    """Télécharge l'image via l'API WebDAV officielle de Nextcloud."""
-    try:
-        # Le nom d'utilisateur est le token secret du partage
-        auth = HTTPBasicAuth('dGjHCTLdJx6xmPq', '')
-        
-        # On rassure la sécurité de Nextcloud
-        headers = {
-            'X-Requested-With': 'XMLHttpRequest',
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'
-        }
-        
-        response = requests.get(url, auth=auth, headers=headers, timeout=15)
-        
-        if response.status_code == 200:
-            return Image.open(io.BytesIO(response.content))
-        else:
-            print(f"Erreur Nextcloud : {response.status_code} sur {url}")
-            return None
-    except Exception as e:
-        print(f"Exception : {e}")
-        return None
-
-# ==========================================
-# VUES (PAGES)
-# ==========================================
+# ---------- Page d'accueil --------
 
 def view_home():
     st.markdown("<br><br>", unsafe_allow_html=True)
@@ -176,8 +120,10 @@ def view_home():
             if st.button("Explorer l'Atlas"):
                 navigate_to('atlas')
         with btn_col2:
-            if st.button("Contribuer & Uploader"):
+            if st.button("Contribuer"):
                 navigate_to('upload')
+
+# ---------- Atlas des glaciers --------
 
 def view_atlas():
     # En-tête avec bouton retour
@@ -231,7 +177,7 @@ def view_atlas():
             location=[item['lat'], item['lon']],
             radius=7,
             popup=item['id'], # ID caché pour récupérer le clic
-            tooltip=f"{item['name']} 📸",
+            tooltip=f"{item['name']}",
             color="#FFFFFF",
             fill=True,
             fill_color="#005c8a",
@@ -275,18 +221,52 @@ def view_atlas():
                         show_labels=True,
                         make_responsive=True
                     )
+                st.markdown("<br>", unsafe_allow_html=True)
+                
+                # Fonction locale pour convertir l'image PIL en octets
+                def get_image_bytes(img):
+                    buf = io.BytesIO()
+                    # Utilisation du format d'origine s'il est détecté, sinon JPEG par défaut
+                    img_format = img.format if img.format else 'JPEG'
+                    img.save(buf, format=img_format)
+                    return buf.getvalue(), img_format.lower()
+                
+                bytes_old, ext_old = get_image_bytes(img_old)
+                bytes_new, ext_new = get_image_bytes(img_new)
+                
+                # Affichage des boutons centrés sous le slider
+                _, col_btn1, col_btn2, _ = st.columns([1, 2, 2, 1])
+                
+                with col_btn1:
+                    st.download_button(
+                        label=f"Télécharger l'archive ({selected_pair['old_date']})",
+                        data=bytes_old,
+                        file_name=f"{slugify(selected_pair['name'])}_{selected_pair['old_date']}.{ext_old}",
+                        mime=f"image/{ext_old}",
+                        use_container_width=True
+                    )
+                    
+                with col_btn2:
+                    st.download_button(
+                        label=f"Télécharger la vue récente ({selected_pair['new_date']})",
+                        data=bytes_new,
+                        file_name=f"{slugify(selected_pair['name'])}_{selected_pair['new_date']}.{ext_new}",
+                        mime=f"image/{ext_new}",
+                        use_container_width=True
+                    )
             else:
-                st.error("⚠️ Impossible de trouver ces images sur le serveur Nextcloud.")
+                st.error("Impossible de trouver ces images sur le serveur Nextcloud.")
                 # Affichage des URL pour vous aider à débugger
                 with st.expander("Détails techniques (pour le débug)"):
                     st.write("Vérifiez que ces liens renvoient bien vers un fichier image en cliquant dessus :")
                     st.markdown(f"- [Lien Archive ({selected_pair['old_img']})]({old_img_url})")
                     st.markdown(f"- [Lien Actuel ({selected_pair['new_img']})]({new_img_url})")
     else:
-        st.info("👆 Cliquez sur un point de la carte pour afficher l'évolution photographique en dessous.")
+        st.info("Cliquez sur un point de la carte pour afficher l'évolution photographique en dessous.")
+
+# ---------- Upload de nouvelles images --------
 
 def view_upload():
-    # En-tête
     col_retour, col_titre = st.columns([1, 5])
     with col_retour:
         st.markdown("<div class='btn-retour'>", unsafe_allow_html=True)
@@ -300,29 +280,221 @@ def view_upload():
     
     st.write("Aidez-nous à documenter l'évolution des glaciers en partageant vos rephotographies.")
     
-    with st.form("contribution_form"):
-        col1, col2 = st.columns(2)
+    # ---------------------------------------------------------
+    # ÉTAPE 1 : SAISIE DES DONNÉES (Sans st.form pour le temps réel)
+    # ---------------------------------------------------------
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        st.subheader("Informations générales")
+        final_glacier_name = st.text_input("Nom du glacier", placeholder="Ex: Glacier du Tour")
+        lat = st.number_input("Latitude du point de vue (ex: 45.9681)", format="%.5f", value=46.0000)
+        lon = st.number_input("Longitude du point de vue (ex: 7.7951)", format="%.5f", value=7.0000)
+        date_archive = st.number_input("Année de la photo d'archive", min_value=1850, max_value=int(datetime.now().year)-1, step=1, value=1930)
+        date_rephoto = st.number_input("Année de votre photo (récente)", min_value=2000, max_value=int(datetime.now().year), step=1, value=2024)
+        contributor = st.text_input("Nom du photographe ou de sa structure (Optionnel)")
         
-        with col1:
-            st.subheader("Informations générales")
-            glacier_name = st.text_input("Nom du glacier")
-            lat = st.number_input("Latitude (ex: 45.9681)", format="%.5f")
-            lon = st.number_input("Longitude (ex: 7.7951)", format="%.5f")
-            date_archive = st.number_input("Année de la photo d'archive", min_value=1800, max_value=2024, step=1)
-            date_rephoto = st.number_input("Année de votre photo", min_value=1800, max_value=2024, step=1)
-            
-        with col2:
-            st.subheader("Fichiers photographiques")
-            photo_archive = st.file_uploader("Importer la photo d'archive (Ancienne)", type=['jpg', 'png'])
-            photo_rephoto = st.file_uploader("Importer la rephotographie (Récemment)", type=['jpg', 'png'])
-            
-            st.subheader("Questionnaire Observateur")
-            commentaires = st.text_area("Remarques additionnelles (météo, conditions d'accès...)")
-            
-        submit = st.form_submit_button("Envoyer ma contribution")
+    with col2:
+        st.subheader("Fichiers photographiques")
+        photo_archive = st.file_uploader("Importer la photo d'archive (Max 10 Mo)", type=['jpg', 'jpeg', 'png'])
+        photo_rephoto = st.file_uploader("Importer la rephotographie (Max 10 Mo)", type=['jpg', 'jpeg', 'png'])
         
-        if submit:
-            st.success("Merci ! Vos données ont été enregistrées (Simulation).")
+        st.subheader("Questionnaire Observateur")
+        commentaires = st.text_area("Remarques additionnelles (météo, conditions d'accès...)")
+
+    # ---------------------------------------------------------
+    # ÉTAPE 2 : PRÉVISUALISATION ET VALIDATION TEMPS RÉEL
+    # ---------------------------------------------------------
+    if photo_archive and photo_rephoto:
+        st.divider()
+        st.subheader("Prévisualisation")
+        
+        # 1. Analyse du poids
+        size_old_mb = photo_archive.size / (1024 * 1024)
+        size_new_mb = photo_rephoto.size / (1024 * 1024)
+        
+        if size_old_mb > 80 or size_new_mb > 80:
+            st.error(f"Vos images sont trop lourdes ({size_old_mb:.1f} Mo et {size_new_mb:.1f} Mo). La limite est de 80 Mo pour garantir la fluidité de l'affichage.")
+            st.stop() # Bloque l'exécution du reste de la page
+            
+        # 2. Analyse de la géométrie (Proportions)
+        img_old = Image.open(photo_archive)
+        img_new = Image.open(photo_rephoto)
+        
+        ratio_old = img_old.width / img_old.height
+        ratio_new = img_new.width / img_new.height
+        
+        # S'il y a plus de 5% de différence dans le ratio largeur/hauteur
+        if abs(ratio_old - ratio_new) > 0.05:
+            st.warning(f"**Attention au recadrage :** Vos deux images n'ont pas exactement les mêmes proportions. L'archive fait {img_old.width}x{img_old.height} et la nouvelle {img_new.width}x{img_new.height}. Le slider risque d'être décalé. Si possible, recadrez-les à l'identique sur votre ordinateur avant l'upload.")
+            
+        # 3. Génération du Slider de prévisualisation
+        st.write("Vérifiez l'alignement de vos photos dans le comparateur ci-dessous avant d'envoyer :")
+        _, col_preview, _ = st.columns([1, 4, 1])
+        with col_preview:
+            try:
+                image_comparison(
+                    img1=img_old,
+                    img2=img_new,
+                    label1=str(date_archive),
+                    label2=str(date_rephoto),
+                    width=700,
+                    starting_position=50,
+                    show_labels=True,
+                    make_responsive=True
+                )
+            except Exception as e:
+                st.error("Impossible de générer l'aperçu visuel.")
+
+        # ---------------------------------------------------------
+        # ÉTAPE 3 : ENVOI FINAL
+        # ---------------------------------------------------------
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.info("Si le résultat visuel vous semble convenir, appuyez sur le bouton ci dessous.")
+    
+        if st.button("Envoyer ma contribution"):
+            if not final_glacier_name:
+                st.error("Veuillez remonter saisir un nom de glacier en haut du formulaire.")
+            else:
+                with st.spinner("Optimisation et envoi des photos sur le cloud..."):
+                        pair_id = uuid.uuid4().hex[:4] 
+                        slug_name = slugify(final_glacier_name)
+                        
+                        # Nous forçons l'extension à .webp puisque l'image sera convertie
+                        name_old = f"{slug_name}_{pair_id}_{date_archive}_old.webp"
+                        name_new = f"{slug_name}_{pair_id}_{date_rephoto}_new.webp"
+                        
+                        folder_path = slug_name
+                        path_old = f"{folder_path}/{name_old}"
+                        path_new = f"{folder_path}/{name_new}"
+                        
+                        # 1. Optimisation des images en mémoire
+                        optimized_old_bytes = optimize_image(photo_archive)
+                        optimized_new_bytes = optimize_image(photo_rephoto)
+                        
+                        # 2. Création du dossier et envoi
+                        create_nextcloud_folder(folder_path)
+                        up_old = upload_to_nextcloud(optimized_old_bytes, path_old)
+                        up_new = upload_to_nextcloud(optimized_new_bytes, path_new)
+                        
+                        if up_old and up_new:
+                            # Préparation de la ligne de données
+                            new_data = {
+                                "pair_id": f"{slug_name}_{pair_id}",
+                                "glacier_name": final_glacier_name,
+                                "lat": lat,
+                                "lon": lon,
+                                "year_old": date_archive,
+                                "year_new": date_rephoto,
+                                "img_old_path": path_old,
+                                "img_new_path": path_new,
+                                "contributor": contributor if contributor else "Anonyme"
+                            }
+                            
+                            # Envoi direct vers le fichier CSV sur Nextcloud
+                            if append_to_remote_csv(new_data):
+                                st.success("Contribution envoyée avec succès. Les photos et les données sont enregistrées.")
+                                load_csv_data.clear() # Force le rafraîchissement au prochain chargement de l'Atlas
+                            else:
+                                st.error("Erreur lors de la mise à jour de la base de données sur Nextcloud.")
+                        else:
+                            st.error("Erreur de communication avec le serveur Nextcloud lors de l'envoi des photos.")
+
+# def view_upload():
+#     col_retour, col_titre = st.columns([1, 5])
+#     with col_retour:
+#         st.markdown("<div class='btn-retour'>", unsafe_allow_html=True)
+#         if st.button("← Retour Accueil"):
+#             navigate_to('home')
+#         st.markdown("</div>", unsafe_allow_html=True)
+        
+#     with col_titre:
+#         st.markdown("<h2 style='margin-top: 0;'>Contribuer à l'Atlas</h2>", unsafe_allow_html=True)
+#     st.divider()
+    
+#     st.write("Aidez-nous à documenter l'évolution des glaciers en partageant vos rephotographies.")
+    
+#     # Récupération des noms depuis le RGI
+#     rgi_names = get_rgi_glacier_names()
+    
+#     with st.form("contribution_form"):
+#         col1, col2 = st.columns(2)
+        
+#         with col1:
+#             st.subheader("Informations générales")
+            
+#             # Champ de texte libre, tout simplement
+#             final_glacier_name = st.text_input("Nom du glacier", placeholder="Ex: Glacier du Tour")
+            
+#             lat = st.number_input("Latitude du point de vue (ex: 45.9681)", format="%.5f", value=46.0000)
+#             lon = st.number_input("Longitude du point de vue (ex: 7.7951)", format="%.5f", value=7.0000)
+#             date_archive = st.number_input("Année de la photo d'archive", min_value=1850, max_value=int(datetime.now().year)-1, step=1, value=1930)
+#             date_rephoto = st.number_input("Année de la photo récente", min_value=2000, max_value=int(datetime.now().year), step=1, value=2024)
+#             contributor = st.text_input("Votre nom / structure (Optionnel)")
+            
+#         with col2:
+#             st.subheader("Fichiers photographiques")
+#             photo_archive = st.file_uploader("Importer la photo d'archive (ancienne)", type=['jpg', 'jpeg', 'png'])
+#             photo_rephoto = st.file_uploader("Importer la rephotographie (récente)", type=['jpg', 'jpeg', 'png'])
+            
+#             st.subheader("Questionnaire Observateur")
+#             commentaires = st.text_area("Remarques additionnelles (météo, conditions d'accès...)")
+            
+#         submit = st.form_submit_button("Envoyer ma contribution")
+        
+#         if submit:
+#             if not final_glacier_name or final_glacier_name == "Sélectionnez...":
+#                 st.error("Veuillez sélectionner ou saisir un nom de glacier.")
+#             elif not photo_archive or not photo_rephoto:
+#                 st.error("Veuillez uploader les deux photographies.")
+#             else:
+#                 with st.spinner("Création des dossiers et envoi des photos sur Nextcloud..."):
+#                     pair_id = uuid.uuid4().hex[:4] # ID court unique
+#                     slug_name = slugify(final_glacier_name)
+                    
+#                     # Construction des noms de fichiers propres
+#                     ext_old = photo_archive.name.split('.')[-1].lower()
+#                     ext_new = photo_rephoto.name.split('.')[-1].lower()
+                    
+#                     name_old = f"{slug_name}_{pair_id}_{date_archive}_old.{ext_old}"
+#                     name_new = f"{slug_name}_{pair_id}_{date_rephoto}_new.{ext_new}"
+                    
+#                     folder_path = slug_name
+#                     path_old = f"{folder_path}/{name_old}"
+#                     path_new = f"{folder_path}/{name_new}"
+                    
+#                     # 1. Création du dossier du glacier
+#                     create_nextcloud_folder(folder_path)
+                    
+#                     # 2. Upload des images
+#                     up_old = upload_to_nextcloud(photo_archive.getvalue(), path_old)
+#                     up_new = upload_to_nextcloud(photo_rephoto.getvalue(), path_new)
+                    
+#                     if up_old and up_new:
+#                         # 3. Mise à jour du fichier CSV en local
+#                         new_row = pd.DataFrame([{
+#                             "pair_id": f"{slug_name}_{pair_id}",
+#                             "glacier_name": final_glacier_name,
+#                             "lat": lat,
+#                             "lon": lon,
+#                             "year_old": date_archive,
+#                             "year_new": date_rephoto,
+#                             "img_old_path": path_old,
+#                             "img_new_path": path_new,
+#                             "contributor": contributor if contributor else "Anonyme"
+#                         }])
+                        
+#                         # Ajout à la suite du fichier existant
+#                         new_row.to_csv(CSV_PATH, mode='a', header=False, index=False)
+                        
+#                         st.success("🎉 Contribution envoyée avec succès ! Les photos sont sur Nextcloud et la carte est mise à jour.")
+#                         st.balloons()
+                        
+#                         # On vide le cache pour que la carte prenne en compte le nouveau point immédiatement
+#                         load_csv_data.clear()
+#                     else:
+#                         st.error("Une erreur est survenue lors de l'envoi vers Nextcloud.")
+
 
 # ==========================================
 # AFFICHAGE DE LA PAGE COURANTE

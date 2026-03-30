@@ -22,3 +22,4 @@ data/images_highres
 data/randolph_glacier_inventory_7_init/
 draft/*.zip
 *.jpg
+old/*

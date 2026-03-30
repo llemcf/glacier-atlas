@@ -1,35 +1,14 @@
-name,filename,date,state,lat_photo,lon_photo,lat_glacier,lon_glacier
-Blüemlisalpgletscher,1164_Bundstock_L_1926.jpg,1926,old,46.4852,7.7753,46.4850,7.7750
-Blüemlisalpgletscher,1164_Bundstock_L_2022.jpg,2022,new,46.4852,7.7753,46.4850,7.7750
-Grosser ALetschgletscher,1518_Moosfluh_L_pano_1927.jpg,1927,old,46.4983,8.0352,46.4980,8.0350
-Grosser ALetschgletscher,1518_Moosfluh_L_pano_2021.jpg,2021,new,46.4983,8.0352,46.4980,8.0350
-Rhonegletscher,1668_Furkahorn-West_L_pano_1928.jpg,1928,old,46.5954,8.3884,46.5950,8.3880
-Rhonegletscher,1668_Furkahorn-West_L_pano_2021.jpg,2021,new,46.5954,8.3884,46.5950,8.3880
-Rhonegletscher,1678_Maienwand_R_pano_1928_lowqual.jpg,1928,old,46.5952,8.3881,46.5950,8.3880
-Rhonegletscher,1678_Maienwand_R_pano_2021.jpg,2021,new,46.5952,8.3881,46.5950,8.3880
-Triftgletscher,1830_Windegg_R_pano_1928.jpg,1928,old,46.6853,8.3582,46.6850,8.3580
-Triftgletscher,1830_Windegg_R_pano_2021.jpg,2021,new,46.6853,8.3582,46.6850,8.3580
-Ghiacciaio de Basodino,2308_Lago-nero_L_pano_1929.jpg,1929,old,46.4113,8.4733,46.4110,8.4730
-Ghiacciaio de Basodino,2308_Lago-nero_L_pano_2021.jpg,2021,new,46.4113,8.4733,46.4110,8.4730
-Findelgletscher,2471_Gugel-Nord_L_pano_1930.jpg,1930,old,46.0123,7.8253,46.0120,7.8250
-Findelgletscher,2471_Gugel-Nord_L_pano_2023.jpg,2023,new,46.0123,7.8253,46.0120,7.8250
-Gornergletscher,2473_Gornergrat-grosse-Basis_R_pano_1930.jpg,1930,old,45.9683,7.7953,45.9680,7.7950
-Gornergletscher,2473_Gornergrat-grosse-Basis_R_pano_2023.jpg,2023,new,45.9683,7.7953,45.9680,7.7950
-Oberer Theodulgletscher,2481_Gandegg-West_R_pano_1930_cut.png,1930,old,45.9453,7.7253,45.9450,7.7250
-Oberer Theodulgletscher,2481_Gandegg-West_R_pano_2022_cut.png,2022,new,45.9453,7.7253,45.9450,7.7250
-Gornergletscher,2482_Gandegg-Ost_L_pano_1930.jpg,1930,old,45.9681,7.7951,45.9680,7.7950
-Gornergletscher,2482_Gandegg_Ost_L_pano_2022.jpg,2022,new,45.9681,7.7951,45.9680,7.7950
-Findelengletscher,2500_Schwarzsee_Ost_L_pano_1930_cut.png,1930,old,46.0122,7.8252,46.0120,7.8250
-Findelengletscher,2500_Schwarzsee_Ost_L_pano_2022_cut.png,2022,new,46.0122,7.8252,46.0120,7.8250
-Allalingletscher,2754_Kl-Allalin-Ost_R_pano_1931.jpg,1931,old,46.0353,7.9103,46.0350,7.9100
-Allalingletscher,2754_Kl-Allalin-Ost_R_pano_2022 compressed.jpg,2022,new,46.0353,7.9103,46.0350,7.9100
-Rotblattgletscher,2765_Almagelleralp_L_pano_1931_cut.jpg,1931,old,46.0083,7.8953,46.0080,7.8950
-Rotblattgletscher,2765_Almagelleralp_L_pano_2022_cut.jpg,2022,new,46.0083,7.8953,46.0080,7.8950
-Vadret da Morteratsch,4326_Munt-Pers-grosse-Basis_L_pano_1935.jpg,1935,old,46.4053,9.9303,46.4050,9.9300
-Vadret da Morteratsch,4326_Munt-Pers-grosse-Basis_L_pano_2022.jpg,2022,new,46.4047,9.9297,46.4050,9.9300
-Vadret da Roseg,4346_Crasta_Sgischus_L_1935_cut.png,1935,old,46.3723,9.8553,46.3720,9.8550
-Vadret da Roseg,4346_Crasta_Sgischus_L_2022_cut.png,2022,new,46.3723,9.8553,46.3720,9.8550
-Vadret da Roseg,4347_Vadret_Alp_Ota_L_1935_cut.png,1935,old,46.3721,9.8551,46.3720,9.8550
-Vadret da Roseg,4347_Vadret_Alp_Ota_L_2022_cut.png,2022,new,46.3721,9.8551,46.3720,9.8550
-Glacier de la Silvretta,Silvretta_1967_cut.png,1967,old,46.8523,10.0823,46.8520,10.0820
-Glacier de la Silvretta,Silvretta_2022_cut.png,2022,new,46.8523,10.0823,46.8520,10.0820
+pair_id,glacier_name,lat,lon,year_old,year_new,img_old_path,img_new_path,contributor
+glacier-du-rhone_cc7c,Glacier du Rhone,46.5954,8.3884,1928,2021,glacier-du-rhone/glacier-du-rhone_cc7c_1928_old.jpg,glacier-du-rhone/glacier-du-rhone_cc7c_2021_new.jpg,Guillem Carcanade (@ETH)
+grosser-aletschgletscher_f69f,Grosser Aletschgletscher,46.4983,8.0352,1927,2021,grosser-aletschgletscher/grosser-aletschgletscher_f69f_1927_old.webp,grosser-aletschgletscher/grosser-aletschgletscher_f69f_2021_new.webp,Mathieu Cretet (@ETH)
+bluemlisalpgletscher_79da,Bluemlisalpgletscher,46.4852,7.7753,1926,2022,bluemlisalpgletscher/bluemlisalpgletscher_79da_1926_old.webp,bluemlisalpgletscher/bluemlisalpgletscher_79da_2022_new.webp,Mathieu Cretet (@ETH)
+glacier-du-rhone_62a7,Glacier du Rhone,46.5954,8.3884,1928,2021,glacier-du-rhone/glacier-du-rhone_62a7_1928_old.webp,glacier-du-rhone/glacier-du-rhone_62a7_2021_new.webp,Mathieu Cretet (@ETH)
+triftgletscher_9863,Triftgletscher,46.6853,8.3582,1928,2021,triftgletscher/triftgletscher_9863_1928_old.webp,triftgletscher/triftgletscher_9863_2021_new.webp,Mathieu Cretet (@ETH)
+ghiacciaio-de-basodino_235d,Ghiacciaio de Basodino,46.4113,8.4733,1929,2021,ghiacciaio-de-basodino/ghiacciaio-de-basodino_235d_1929_old.webp,ghiacciaio-de-basodino/ghiacciaio-de-basodino_235d_2021_new.webp,Mathieu Cretet - Guillem Carcanade (@ETH)
+findelgletscher_3595,Findelgletscher,46.0123,7.8253,1930,2023,findelgletscher/findelgletscher_3595_1930_old.webp,findelgletscher/findelgletscher_3595_2023_new.webp,Mathieu Cretet - Guillem Carcanade (@ETH)
+gornergletscher_dab3,Gornergletscher,45.9681,7.7951,1930,2022,gornergletscher/gornergletscher_dab3_1930_old.webp,gornergletscher/gornergletscher_dab3_2022_new.webp,Guillem Carcanade - Leo Hoesli (@ETH)
+findelengletscher_b07b,Findelengletscher,46.0122,7.8252,1930,2022,findelengletscher/findelengletscher_b07b_1930_old.webp,findelengletscher/findelengletscher_b07b_2022_new.webp,Guillem Carcanade - Leo Hoesli (@ETH)
+allalingletscher_a85a,Allalingletscher,46.0353,7.9103,1931,2022,allalingletscher/allalingletscher_a85a_1931_old.webp,allalingletscher/allalingletscher_a85a_2022_new.webp,Guillem Carcanade - Leo Hoesli (@ETH)
+rotblattgletscher_512f,Rotblattgletscher,46.0083,7.8953,1931,2022,rotblattgletscher/rotblattgletscher_512f_1931_old.webp,rotblattgletscher/rotblattgletscher_512f_2022_new.webp,Guillem Carcanade (@ETH)
+vadret-da-morteratsch_8be4,Vadret da Morteratsch,46.4053,9.9303,1935,2022,vadret-da-morteratsch/vadret-da-morteratsch_8be4_1935_old.webp,vadret-da-morteratsch/vadret-da-morteratsch_8be4_2022_new.webp,Guillem Carcanade (@ETH)
+glacier-de-la-silvretta_8c2c,Glacier de la Silvretta,46.8523,10.0823,1967,2022,glacier-de-la-silvretta/glacier-de-la-silvretta_8c2c_1967_old.webp,glacier-de-la-silvretta/glacier-de-la-silvretta_8c2c_2022_new.webp,Mathieu Cretet
